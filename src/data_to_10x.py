@@ -131,19 +131,3 @@ class TenXConverter:
                     zip_handle.write(os.path.join(tmp_dir, file_name), arcname=file_name)
         
         logging.info(f"10x formatted files zipped successfully to {output_path}.")
-
-if __name__ == "__main__":
-    # Example usage
-    import scanpy as sc
-
-    input_path = r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\data\output_anndata.h5ad"
-    converter = TenXConverter(input_path)
-
-    
-    # Convert to 10x format
-    converter.h5ad_to_10x( 
-        gene_id_key="gene_id", 
-        gene_name_key="gene",  # Ensure this is distinct from gene_id_key
-        cell_type_key="cell_type", 
-        output_path=r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\matrix.zip"
-    )

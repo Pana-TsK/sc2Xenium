@@ -14,6 +14,14 @@ import zipfile
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AnndataConverter:
+    """
+    Convert a CSV matrix file to AnnData format.
+    The input files should be in CSV format:
+    :param cells_input: cell metadata (columns: cell barcode, cell metadata)
+    :param genes_input: gene metadata (columns: gene_id, gene metadata)
+    :param matrix_input: expression matrix (rows: cell barcode, columns: gene_id)
+
+    """
     def __init__(self, cells_input, genes_input, matrix_input):
         self.cells_input = cells_input
         self.genes_input = genes_input
@@ -174,29 +182,3 @@ class AnndataConverter:
         
         logging.info(f"Created AnnData object with shape {adata.shape}.")
         return adata
-
-
-def main():
-    # Specify your file paths here
-    cells_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\data\SC_GEO_cells.csv"
-    genes_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\data\SC_GEO_genes.csv"
-    matrix_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\data\GSE192456_SC_GEO_raw_counts.csv.gz"
-    
-    # Create an instance of the converter
-    converter = AnndataConverter(cells_input, genes_input, matrix_input)
-    
-    # Option 1: Convert to MTX format and create an AnnData object
-    converter.convert_to_mtx()
-    adata = converter.create_anndata_from_mtx()
-    
-    # Save the AnnData object to disk
-    output_h5ad = os.path.join(os.path.dirname(matrix_input), "output_anndata.h5ad")
-    adata.write_h5ad(output_h5ad)
-    logging.info(f"AnnData object saved to {output_h5ad}.")
-    
-    return adata
-
-if __name__ == "__main__":
-    adata = main()
-
-    print(adata)

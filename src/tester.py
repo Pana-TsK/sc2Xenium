@@ -34,17 +34,3 @@ class DataTester:
         
         return mtx.to_df().head()
 
-# Example usage
-
-if __name__ == "__main__":
-
-    # create an instance of the DataTester class
-    zip_path = r"C:\Users\panag\OneDrive\Documents\coding\Projects\Liliana\matrix.zip"
-    dt = DataTester(zip_path)
-    
-    # list the contents of the zip file
-    dt.list_zip_contents()
-
-    # read in the matrix file
-    read_matrix = dt.matrix_reader()
-    print(read_matrix)
