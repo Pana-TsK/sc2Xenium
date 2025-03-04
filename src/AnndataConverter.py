@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 import scanpy as sc
-import h5py
 import logging
 import scipy.io
 import gzip
@@ -20,7 +19,6 @@ class AnndataConverter:
     :param cells_input: cell metadata (columns: cell barcode, cell metadata)
     :param genes_input: gene metadata (columns: gene_id, gene metadata)
     :param matrix_input: expression matrix (rows: cell barcode, columns: gene_id)
-
     """
     def __init__(self, cells_input, genes_input, matrix_input):
         self.cells_input = cells_input
@@ -96,7 +94,7 @@ class AnndataConverter:
                 expression_values = row.iloc[1:].values
                 non_zero_mask = expression_values > 0
                 if np.any(non_zero_mask):
-                    non_zero_values = expression_values[non_zero_mask]
+                    non_zero_values = expression_values[non_zero_mask].astype(int)  # Force to int
                     data.extend(non_zero_values)
                     gene_indices = np.where(non_zero_mask)[0] + 1  # Convert to 1-indexed
                     row_indices.extend(gene_indices)
@@ -107,11 +105,11 @@ class AnndataConverter:
         
         # Write matrix.mtx in Matrix Market format
         with open(matrix_path, 'w') as f:
-            f.write("%%MatrixMarket matrix coordinate real general\n")
+            f.write("%%MatrixMarket matrix coordinate integer general\n")
             # Header: rows (genes) x cols (cells) x nonzeros
             f.write(f"{genes_df.shape[0]} {row_count} {len(data)}\n")
             for i in range(len(data)):
-                f.write(f"{row_indices[i]} {col_indices[i]} {data[i]}\n")
+                f.write(f"{row_indices[i]} {col_indices[i]} {int(data[i])}\n")  # Explicit cast to int
         
         # Write barcodes.tsv
         with open(barcodes_path, 'w') as f:
@@ -134,6 +132,9 @@ class AnndataConverter:
         
         # Read matrix.mtx and transpose
         adata = sc.read_mtx(os.path.join(self.mtx_path, "matrix.mtx")).T
+
+        # Convert to integer sparse matrix
+        adata.X = adata.X.astype(np.int32)
         
         # Read barcodes (cell identifiers)
         with open(os.path.join(self.mtx_path, "barcodes.tsv"), 'r') as f:
@@ -162,7 +163,7 @@ class AnndataConverter:
             adata.var_names_make_unique()
         
         # Assign remaining columns to var
-        adata.var = features.copy() # for the love of God please make this assign all columns 
+        adata.var = features.copy()
         
         # Add cell metadata from cells_input
         cells_df = self.read_csv(self.cells_input)
@@ -181,4 +182,18 @@ class AnndataConverter:
         adata.obs = cells_df.loc[adata.obs_names]
         
         logging.info(f"Created AnnData object with shape {adata.shape}.")
+        adata.write("adata.h5ad")
         return adata
+
+
+# Example usage
+if __name__ == "__main__":
+    cells_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\sc2Xenium\data\SC_GEO_cells.csv"
+    genes_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\sc2Xenium\data\SC_GEO_genes.csv"
+    matrix_input = r"C:\Users\panag\OneDrive\Documents\coding\Projects\sc2Xenium\data\SC_GEO_raw_counts.csv"
+    converter = AnndataConverter(cells_input, genes_input, matrix_input)
+    
+    adata = converter.create_anndata_from_mtx()
+
+    print(adata.X.dtype) # for the love of God please print out integer
+
